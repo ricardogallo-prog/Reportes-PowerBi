@@ -4,6 +4,7 @@
   "type": "commonjs",
   "scripts": {
     "scrape": "node scrape-powerbi.js",
+    "parse": "node parse-data.js",
     "report": "node generate-report.js"
   },
   "dependencies": {
