@@ -7,11 +7,9 @@ const { chromium } = require("playwright");
   const branch = process.env.BRANCH_OFFICE;
 
   const filter = `markets_01/Branch_Office eq '${branch}'`;
-
   const url = `${baseUrl}&filter=${encodeURIComponent(filter)}`;
 
-  console.log("Opening dashboard for:", branch);
-  console.log(url);
+  console.log("Opening:", branch);
 
   const browser = await chromium.launch({ headless: true });
 
@@ -23,6 +21,27 @@ const { chromium } = require("playwright");
 
   await page.waitForTimeout(15000);
 
+  // =============================
+  // abrir visual Premium per Producer
+  // =============================
+
+  const visual = page.locator("text=Premium per Producer");
+
+  await visual.click();
+
+  await page.waitForTimeout(2000);
+
+  // abrir menú del visual
+  await page.locator("button[aria-label='More options']").first().click();
+
+  await page.waitForTimeout(2000);
+
+  await page.locator("text=Show as table").click();
+
+  await page.waitForTimeout(4000);
+
+  const table = await page.locator("table").innerText();
+
   const screenshotName = `dashboard_${branch.replace(/\s/g,"_")}.png`;
 
   await page.screenshot({
@@ -31,9 +50,9 @@ const { chromium } = require("playwright");
   });
 
   const data = {
-    branch: branch,
-    screenshot: screenshotName,
-    generated: new Date().toISOString()
+    branch,
+    premiumPerProducerTable: table,
+    screenshot: screenshotName
   };
 
   fs.writeFileSync(
