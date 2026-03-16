@@ -2,7 +2,7 @@ const pptxgen = require("pptxgenjs");
 
 const fs = require("fs");
 
-const branch = process.env.BRANCH_OFFICE;
+const branch = process.env.BRANCH_OFFICE.replace(/\s/g,"_");
 const data = JSON.parse(
   fs.readFileSync(`report-data-${branch}.json`)
 );
