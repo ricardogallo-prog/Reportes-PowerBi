@@ -4,7 +4,7 @@ const fs = require("fs");
 
 const branch = process.env.BRANCH_OFFICE.replace(/\s/g,"_");
 const data = JSON.parse(
-  fs.readFileSync(`report-data-${branch}.json`)
+  fs.readFileSync(`report-clean-${branch}.json`)
 );
 
 // Color palette
