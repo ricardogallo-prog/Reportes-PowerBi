@@ -1,0 +1,13 @@
+{
+  "name": "reportes-powerbi",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "scrape": "node scrape-powerbi.js",
+    "report": "node generate-report.js"
+  },
+  "dependencies": {
+    "playwright": "^1.54.0",
+    "pptxgenjs": "^3.12.0"
+  }
+}
