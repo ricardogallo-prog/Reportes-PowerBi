@@ -1,4 +1,4 @@
-name: Generar reporte Power BI
+name: Generar reportes Power BI
 
 on:
   workflow_dispatch:
@@ -6,51 +6,59 @@ on:
     - cron: "0 12 1 * *"
 
 jobs:
+
   build-report:
+
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        branch:
+          - "Sede Convicción"
+          - "Sede Norte"
 
     env:
       POWERBI_URL: ${{ secrets.POWERBI_URL }}
+      BRANCH_OFFICE: ${{ matrix.branch }}
 
     steps:
 
-      - name: Descargar repositorio
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Instalar dependencias npm
+      - name: Install packages
         run: npm install
 
-      - name: Instalar Chromium de Playwright
+      - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Abrir Power BI y preparar datos
-        run: npm run scrape
+      - name: Scrape Power BI
+        run: node scrape-powerbi.js
 
-      - name: Generar PPTX
-        run: npm run report
+      - name: Generate PPTX
+        run: node generate-report.js
 
-      - name: Instalar LibreOffice
+      - name: Install LibreOffice
         run: |
           sudo apt-get update
           sudo apt-get install -y libreoffice
 
-      - name: Convertir PPTX a PDF
-        run: libreoffice --headless --convert-to pdf SedeConviccion_Q4_2025_COMPLETE_FINAL.pptx
+      - name: Convert to PDF
+        run: |
+          SAFE=$(echo "${BRANCH_OFFICE}" | sed 's/[^A-Za-z0-9]/_/g')
+          libreoffice --headless --convert-to pdf "Reporte_${BRANCH_OFFICE}_Q4_2025.pptx"
 
-      - name: Ver archivos generados
-        run: ls -lah
-
-      - name: Subir artefactos
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: reporte-powerbi
+          name: reporte-${{ matrix.branch }}
           path: |
-            SedeConviccion_Q4_2025_COMPLETE_FINAL.pptx
-            SedeConviccion_Q4_2025_COMPLETE_FINAL.pdf
-            dashboard.png
-            report-data.json
+            *.pptx
+            *.pdf
+            *.png
+            *.json
