@@ -1,4 +1,4 @@
-name: Generar reportes Power BI
+name: Generate Power BI Reports
 
 on:
   workflow_dispatch:
@@ -23,22 +23,21 @@ jobs:
 
     steps:
 
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Install Playwright
-        run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium
 
       - name: Scrape Power BI
         run: node scrape-powerbi.js
+
+      - name: Parse Data
+        run: node parse-data.js
 
       - name: Generate PPTX
         run: node generate-report.js
@@ -60,5 +59,5 @@ jobs:
           path: |
             *.pptx
             *.pdf
-            *.png
             *.json
+            *.png
