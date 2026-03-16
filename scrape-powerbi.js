@@ -6,8 +6,10 @@ const { chromium } = require("playwright");
   const baseUrl = process.env.POWERBI_URL;
   const branch = process.env.BRANCH_OFFICE;
 
-  const filter = `markets_01/Branch_Office eq '${branch}'`;
-  const url = `${baseUrl}&filter=${encodeURIComponent(filter)}`;
+  const branchSafe = branch
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s/g, "_");
 
   const browser = await chromium.launch({ headless: true });
 
@@ -15,17 +17,49 @@ const { chromium } = require("playwright");
     viewport: { width: 1920, height: 1080 }
   });
 
-  console.log("Opening dashboard:", branch);
+  console.log("Opening dashboard for:", branch);
 
-  await page.goto(url, { waitUntil: "networkidle" });
+  await page.goto(baseUrl, { waitUntil: "networkidle" });
 
   await page.waitForTimeout(15000);
+
+  // -------------------------------
+  // APPLY BRANCH FILTER (SLICER)
+  // -------------------------------
+
+  try {
+
+    console.log("Applying Branch_Office filter...");
+
+    const slicer = page.locator("text=Branch_Office").first();
+
+    await slicer.click();
+
+    await page.waitForTimeout(2000);
+
+    const option = page.locator(`text=${branch}`).first();
+
+    await option.click();
+
+    console.log("Branch selected:", branch);
+
+    await page.waitForTimeout(8000);
+
+  } catch (err) {
+
+    console.log("Branch filter not applied:", err.message);
+
+  }
+
+  // -------------------------------
+  // SCRAPE VISUALS
+  // -------------------------------
 
   const visuals = page.locator(".visual-container");
 
   const count = await visuals.count();
 
-  console.log("Visuals found:", count);
+  console.log("Visuals detected:", count);
 
   const extracted = {};
 
@@ -61,22 +95,32 @@ const { chromium } = require("playwright");
 
         await page.keyboard.press("Escape");
 
+        console.log("Extracted visual:", i);
+
       }
 
     } catch (err) {
 
-      console.log("visual skipped:", i);
+      console.log("Visual skipped:", i);
 
     }
 
   }
 
-  const screenshot = `dashboard_${branch.replace(/\s/g,"_")}.png`;
+  // -------------------------------
+  // SCREENSHOT
+  // -------------------------------
+
+  const screenshot = `dashboard_${branchSafe}.png`;
 
   await page.screenshot({
     path: screenshot,
     fullPage: true
   });
+
+  // -------------------------------
+  // SAVE DATA
+  // -------------------------------
 
   const data = {
     branch,
@@ -86,9 +130,11 @@ const { chromium } = require("playwright");
   };
 
   fs.writeFileSync(
-    `report-data-${branch.replace(/\s/g,"_")}.json`,
+    `report-data-${branchSafe}.json`,
     JSON.stringify(data, null, 2)
   );
+
+  console.log("Data saved:", `report-data-${branchSafe}.json`);
 
   await browser.close();
 
