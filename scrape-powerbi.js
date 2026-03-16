@@ -6,10 +6,12 @@ const { chromium } = require("playwright");
   const baseUrl = process.env.POWERBI_URL;
   const branch = process.env.BRANCH_OFFICE;
 
-  const filter = `Sales/branch_office eq '${branch}'`;
+  const filter = `markets_01/Branch_Office eq '${branch}'`;
+
   const url = `${baseUrl}&filter=${encodeURIComponent(filter)}`;
 
-  console.log("Opening:", url);
+  console.log("Opening dashboard for:", branch);
+  console.log(url);
 
   const browser = await chromium.launch({ headless: true });
 
@@ -21,26 +23,24 @@ const { chromium } = require("playwright");
 
   await page.waitForTimeout(15000);
 
+  const screenshotName = `dashboard_${branch.replace(/\s/g,"_")}.png`;
+
   await page.screenshot({
-    path: `dashboard_${branch}.png`,
+    path: screenshotName,
     fullPage: true
   });
 
   const data = {
     branch: branch,
-    date: new Date().toISOString(),
-    screenshot: `dashboard_${branch}.png`
+    screenshot: screenshotName,
+    generated: new Date().toISOString()
   };
 
   fs.writeFileSync(
-    `report-data-${branch}.json`,
+    `report-data-${branch.replace(/\s/g,"_")}.json`,
     JSON.stringify(data, null, 2)
   );
 
   await browser.close();
 
-})();
-  fs.writeFileSync("report-data.json", JSON.stringify(reportData, null, 2), "utf8");
-
-  await browser.close();
 })();
