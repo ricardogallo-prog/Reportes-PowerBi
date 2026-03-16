@@ -13,6 +13,7 @@ jobs:
       POWERBI_URL: ${{ secrets.POWERBI_URL }}
 
     steps:
+
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
@@ -34,17 +35,22 @@ jobs:
         run: npm run report
 
       - name: Instalar LibreOffice
-        run: sudo apt-get update && sudo apt-get install -y libreoffice
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice
 
       - name: Convertir PPTX a PDF
-        run: libreoffice --headless --convert-to pdf SedeConviccion_Q4_2025.pptx
+        run: libreoffice --headless --convert-to pdf SedeConviccion_Q4_2025_COMPLETE_FINAL.pptx
+
+      - name: Ver archivos generados
+        run: ls -lah
 
       - name: Subir artefactos
         uses: actions/upload-artifact@v4
         with:
           name: reporte-powerbi
           path: |
-            SedeConviccion_Q4_2025.pptx
-            SedeConviccion_Q4_2025.pdf
+            SedeConviccion_Q4_2025_COMPLETE_FINAL.pptx
+            SedeConviccion_Q4_2025_COMPLETE_FINAL.pdf
             dashboard.png
             report-data.json
