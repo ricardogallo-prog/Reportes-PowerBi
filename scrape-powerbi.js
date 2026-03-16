@@ -2,98 +2,94 @@ const fs = require("fs");
 const { chromium } = require("playwright");
 
 (async () => {
+
   const baseUrl = process.env.POWERBI_URL;
   const branch = process.env.BRANCH_OFFICE;
 
-  // Ajusta la tabla/campo si en tu modelo se llaman distinto
   const filter = `markets_01/Branch_Office eq '${branch}'`;
   const url = `${baseUrl}&filter=${encodeURIComponent(filter)}`;
 
-  const branchSafe = branch.replace(/\s/g, "_");
-
-  console.log("Opening dashboard for:", branch);
-  console.log(url);
-
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+
+  const page = await browser.newPage({
+    viewport: { width: 1920, height: 1080 }
+  });
+
+  console.log("Opening dashboard:", branch);
 
   await page.goto(url, { waitUntil: "networkidle" });
+
   await page.waitForTimeout(15000);
 
-  const visuals = [
-    "Premium per Unit Type",
-    "Monthly sold premium",
-    "Leads per Sales Leader",
-    "Premium per Producer",
-    "Premium per Carrier",
-    "Premium per MGA",
-    "Premium per Type of Business",
-    "Premium per # of Units",
-    "Premium per Years in Business"
-  ];
+  const visuals = page.locator(".visual-container");
+
+  const count = await visuals.count();
+
+  console.log("Visuals found:", count);
 
   const extracted = {};
 
-  for (const title of visuals) {
-    console.log("Processing visual:", title);
+  for (let i = 0; i < count; i++) {
+
+    const visual = visuals.nth(i);
 
     try {
-      const visual = page.locator(`text=${title}`).first();
 
       await visual.scrollIntoViewIfNeeded();
-      await visual.click();
 
-      await page.waitForTimeout(2000);
+      await visual.hover();
 
-      // abrir menú del visual
-      const moreOptions = page.locator("button[aria-label='More options']").first();
-      await moreOptions.click();
+      const more = visual.locator("button[aria-label='More options']");
 
-      await page.waitForTimeout(2000);
+      if (await more.count() === 0) continue;
+
+      await more.first().click();
+
+      await page.waitForTimeout(1500);
 
       const showTable = page.locator("text=Show as table");
 
       if (await showTable.count() > 0) {
-        await showTable.click();
+
+        await showTable.first().click();
 
         await page.waitForTimeout(4000);
 
         const rows = await page.locator("table tr").allTextContents();
 
-        extracted[title] = rows;
+        extracted[`visual_${i}`] = rows;
 
-        // cerrar tabla
         await page.keyboard.press("Escape");
-      } else {
-        console.log("No table option for:", title);
-        extracted[title] = "No table view available";
+
       }
 
     } catch (err) {
-      console.log("Error with visual:", title);
-      console.log(err.message);
-      extracted[title] = "Extraction failed";
+
+      console.log("visual skipped:", i);
+
     }
+
   }
 
-  const screenshotName = `dashboard_${branchSafe}.png`;
+  const screenshot = `dashboard_${branch.replace(/\s/g,"_")}.png`;
 
   await page.screenshot({
-    path: screenshotName,
+    path: screenshot,
     fullPage: true
   });
 
   const data = {
-    branch: branch,
+    branch,
     generated: new Date().toISOString(),
     visuals: extracted,
-    screenshot: screenshotName
+    screenshot
   };
 
   fs.writeFileSync(
-    `report-data-${branchSafe}.json`,
+    `report-data-${branch.replace(/\s/g,"_")}.json`,
     JSON.stringify(data, null, 2)
   );
 
   await browser.close();
+
 })();
