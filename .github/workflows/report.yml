@@ -15,7 +15,7 @@ jobs:
       matrix:
         branch:
           - "Sede Convicción"
-          - "Sede Norte"
+          - "Evolución"
 
     env:
       POWERBI_URL: ${{ secrets.POWERBI_URL }}
@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install packages
+      - name: Install dependencies
         run: npm install
 
       - name: Install Playwright
@@ -48,10 +48,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libreoffice
 
-      - name: Convert to PDF
+      - name: Convert PPTX to PDF
         run: |
           SAFE=$(echo "${BRANCH_OFFICE}" | sed 's/[^A-Za-z0-9]/_/g')
-          libreoffice --headless --convert-to pdf "Reporte_${BRANCH_OFFICE}_Q4_2025.pptx"
+          libreoffice --headless --convert-to pdf "Reporte_${SAFE}_Q4_2025.pptx"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
