@@ -1,6 +1,9 @@
 const fs = require("fs");
 
-const branch = process.env.BRANCH_OFFICE.replace(/\s/g,"_");
+const branch = process.env.BRANCH_OFFICE
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"")
+  .replace(/\s/g,"_");
 
 const raw = JSON.parse(
   fs.readFileSync(`report-data-${branch}.json`)
