@@ -1,11 +1,13 @@
-const pptxgen = require("pptxgenjs");
-
+const PptxGenJS = require("pptxgenjs");
 const fs = require("fs");
 
-const branch = process.env.BRANCH_OFFICE.replace(/\s/g,"_");
-const data = JSON.parse(
-  fs.readFileSync(`report-clean-${branch}.json`)
-);
+const branch = process.env.BRANCH_OFFICE
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"")
+  .replace(/\s/g,"_");
+
+// Crear la presentación
+const pres = new PptxGenJS();
 
 // Color palette
 const C = {
