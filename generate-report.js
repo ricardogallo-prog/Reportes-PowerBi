@@ -1,8 +1,11 @@
 const pptxgen = require("pptxgenjs");
 
-const pres = new pptxgen();
-pres.layout = 'LAYOUT_16x9';
-pres.title = 'Sede Convicción Q4 2025';
+const fs = require("fs");
+
+const branch = process.env.BRANCH_OFFICE;
+const data = JSON.parse(
+  fs.readFileSync(`report-data-${branch}.json`)
+);
 
 // Color palette
 const C = {
@@ -1571,7 +1574,9 @@ console.log("✓ Slide 19: Nexus vs Trinity Comparison");
 
 console.log("✓ Slide 20: Action Plan with Strategic Commitments");
 
-pres.writeFile({ fileName: "SedeConviccion_Q4_2025_COMPLETE_FINAL.pptx" })
+pres.writeFile({
+ fileName: `Reporte_${branch}_Q4_2025.pptx`
+})
   .then(() => {
     console.log("\n" + "=".repeat(70));
     console.log("✓✓✓ PRESENTATION COMPLETED SUCCESSFULLY! ✓✓✓");
