@@ -1,0 +1,50 @@
+name: Generar reporte Power BI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 1 * *"
+
+jobs:
+  build-report:
+    runs-on: ubuntu-latest
+
+    env:
+      POWERBI_URL: ${{ secrets.POWERBI_URL }}
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias npm
+        run: npm install
+
+      - name: Instalar Chromium de Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Abrir Power BI y preparar datos
+        run: npm run scrape
+
+      - name: Generar PPTX
+        run: npm run report
+
+      - name: Instalar LibreOffice
+        run: sudo apt-get update && sudo apt-get install -y libreoffice
+
+      - name: Convertir PPTX a PDF
+        run: libreoffice --headless --convert-to pdf SedeConviccion_Q4_2025.pptx
+
+      - name: Subir artefactos
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-powerbi
+          path: |
+            SedeConviccion_Q4_2025.pptx
+            SedeConviccion_Q4_2025.pdf
+            dashboard.png
+            report-data.json
